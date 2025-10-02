@@ -22,7 +22,8 @@ A simple Node.js Express server that serves a tar.gz archive of a specified fold
 1. Clone this repository:
 
 ```sh
-git clone git://github.com/zxdong262/src-server.git
+git clone http://github.com/zxdong262/src-server.git
+# or git clone git@github.com:zxdong262/src-server.git
 cd src-server
 ```
 
