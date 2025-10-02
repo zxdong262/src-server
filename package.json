@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "git repo src server",
   "main": "src/server.js",
+  "type":"module",
   "scripts": {
     "lint": "./node_modules/.bin/standard",
     "fix": "./node_modules/.bin/standard --fix",

@@ -24,7 +24,7 @@ Designed to run on Ubuntu servers, e.g., in a GitHub Actions workflow or as a st
 1. Clone this repository:
 
 ```sh
-git clone https://github.com/zxdong262/src-server.git
+git clone git://github.com/zxdong262/src-server.git
 cd src-server
 ```
 
