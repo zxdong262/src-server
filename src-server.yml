@@ -1,0 +1,14 @@
+apps:
+  - name: git-repo-server
+    script: src/server.js
+    cwd: .
+    env:
+      NODE_ENV: production
+      # HOST, PORT, GIT_REPO_PATH, BRANCH_NAME, SRC_FOLDER, TOKEN are loaded from .env
+    watch: false
+    autorestart: true
+    max_restarts: 10
+    restart_delay: 5000
+    error_file: ./logs/pm2-error.log
+    out_file: ./logs/pm2-out.log
+    log_date_format: 'YYYY-MM-DD HH:mm Z'
