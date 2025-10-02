@@ -2,8 +2,6 @@
 
 A simple Node.js Express server that serves a tar.gz archive of a specified folder from a Git repository. The server automatically pulls the latest changes from the specified branch if the local repo is out of sync with the remote origin. Access is secured via a token-based authentication header.
 
-Designed to run on Ubuntu servers, e.g., in a GitHub Actions workflow or as a standalone service.
-
 ## Features
 
 - **Automatic Git Sync**: Fetches and pulls the latest changes from the remote origin branch before serving.
