@@ -1,0 +1,43 @@
+{
+  "name": "src-server",
+  "version": "1.0.0",
+  "description": "git repo src server",
+  "main": "src/server.js",
+  "scripts": {
+    "lint": "./node_modules/.bin/standard",
+    "fix": "./node_modules/.bin/standard --fix",
+    "test": "vitest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zxdong262/src-server.git"
+  },
+  "keywords": [
+    "src",
+    "server",
+    "repo"
+  ],
+  "author": "ZHAO Xudong <zxdong@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/zxdong262/src-server/issues"
+  },
+  "homepage": "https://github.com/zxdong262/src-server#readme",
+  "dependencies": {
+    "dotenv": "17.2.3",
+    "express": "5.1.0"
+  },
+  "devDependencies": {
+    "standard": "^17.1.2",
+    "supertest": "^7.1.4",
+    "vitest": "^3.2.4"
+  },
+  "standard": {
+    "sourceType": "module",
+    "ignore": [
+      "/temp",
+      "/node_modules"
+    ],
+    "global": []
+  }
+}
