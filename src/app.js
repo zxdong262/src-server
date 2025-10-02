@@ -1,0 +1,72 @@
+import express from 'express'
+import dotenv from 'dotenv'
+import { exec } from 'child_process'
+import { promisify } from 'util'
+import fs from 'fs/promises'
+import path from 'path'
+
+dotenv.config()
+
+const app = express()
+const requiredEnvVars = ['GIT_REPO_PATH', 'BRANCH_NAME', 'SRC_FOLDER', 'TOKEN']
+const missingEnvVars = requiredEnvVars.filter((key) => !process.env[key])
+
+if (missingEnvVars.length > 0) {
+  console.error(`Missing required environment variables: ${missingEnvVars.join(', ')}`)
+  process.exit(1)
+}
+
+const { BRANCH_NAME, SRC_FOLDER, TOKEN } = process.env
+
+const execAsync = promisify(exec)
+
+app.get('/health', (req, res) => {
+  res.status(200).send('OK')
+})
+
+app.get('/src', async (req, res) => {
+  const authHeader = req.headers.auth
+  if (!authHeader || authHeader !== TOKEN) {
+    return res.status(401).send('Unauthorized')
+  }
+
+  try {
+    const repoPath = process.env.GIT_REPO_PATH
+
+    // Fetch latest from origin
+    await execAsync(`git -C ${repoPath} fetch origin`)
+
+    // Check git status
+    const { stdout: statusOutput } = await execAsync(`git -C ${repoPath} status`)
+    const isUpToDate = statusOutput.includes(`Your branch is up to date with 'origin/${BRANCH_NAME}'`)
+
+    if (!isUpToDate) {
+      console.log('Repo not in sync, pulling...')
+      await execAsync(`git -C ${repoPath} pull origin ${BRANCH_NAME}`)
+    }
+
+    // Get current git hash
+    const { stdout: hashOutput } = await execAsync(`git -C ${repoPath} rev-parse HEAD`)
+    const gitHash = hashOutput.trim().substring(0, 7) // Abbrev hash
+    const tarFileName = `src-${gitHash}.tar.gz`
+    const tarFilePath = path.join(repoPath, tarFileName)
+
+    // Check if tar file exists
+    try {
+      await fs.access(tarFilePath)
+      console.log('Tar file already exists, serving...')
+    } catch {
+      console.log('Creating tar file...')
+      // Tar the specified folder (could be '.' for whole repo or a subfolder)
+      await execAsync(`cd ${repoPath} && tar -czf ${tarFileName} ${SRC_FOLDER}`)
+    }
+
+    // Serve the file
+    res.download(tarFilePath)
+  } catch (error) {
+    console.error('Error in /src route:', error)
+    res.status(500).send('Internal Server Error')
+  }
+})
+
+export { app }

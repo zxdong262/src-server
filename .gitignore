@@ -133,3 +133,4 @@ dist
 .vercel
 /public
 .DS_Store
+/src-test
