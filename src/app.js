@@ -4,16 +4,21 @@ import { exec } from 'child_process'
 import { promisify } from 'util'
 import fs from 'fs/promises'
 import path from 'path'
-
+import os from 'os'
 dotenv.config()
 
 const app = express()
+const tempFolder = os.tmpdir()
 const requiredEnvVars = ['GIT_REPO_PATH', 'BRANCH_NAME', 'SRC_FOLDER', 'TOKEN']
 const missingEnvVars = requiredEnvVars.filter((key) => !process.env[key])
 
 if (missingEnvVars.length > 0) {
   console.error(`Missing required environment variables: ${missingEnvVars.join(', ')}`)
   process.exit(1)
+}
+
+function checkFileExists (filePath) {
+  return fs.access(filePath).then(() => true).catch(() => false)
 }
 
 const { BRANCH_NAME, SRC_FOLDER, TOKEN } = process.env
@@ -49,17 +54,14 @@ app.get('/src', async (req, res) => {
     const { stdout: hashOutput } = await execAsync(`git -C ${repoPath} rev-parse HEAD`)
     const gitHash = hashOutput.trim().substring(0, 7) // Abbrev hash
     const tarFileName = `src-${gitHash}.tar.gz`
-    const tarFilePath = path.join(repoPath, tarFileName)
+    const tarFilePath = path.join(tempFolder, tarFileName)
 
     // Check if tar file exists
-    try {
-      await fs.access(tarFilePath)
-      console.log('Tar file already exists, serving...')
-    } catch {
-      console.log('Creating tar file...')
-      // Tar the specified folder (could be '.' for whole repo or a subfolder)
-      await execAsync(`cd ${repoPath} && tar -czf ${tarFileName} ${SRC_FOLDER}`)
+    const exist = await checkFileExists(tarFilePath)
+    if (exist) {
+      await fs.unlink(tarFilePath)
     }
+    await execAsync(`cd ${repoPath}/.. && tar -czf ${tarFileName} ${SRC_FOLDER}`)
 
     // Serve the file
     res.download(tarFilePath)

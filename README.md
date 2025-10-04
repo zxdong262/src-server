@@ -58,7 +58,7 @@ Create a `.env` file with the following:
 | `PORT`            | Server port                                      | No       | `3000`                   |
 | `GIT_REPO_PATH`   | Absolute path to the Git repository folder       | Yes      | `/home/user/my-repo`     |
 | `BRANCH_NAME`     | Git branch to track and pull from                | Yes      | `main`                   |
-| `SRC_FOLDER`      | Folder to archive (`.` for entire repo)          | Yes      | `src` or `.`             |
+| `SRC_FOLDER`      | Folder to archive (`.` for entire repo)          | Yes      | `/home/user/my-repo/src` or `/home/user/my-repo`             |
 | `TOKEN`           | Secret token for `/src` auth (GitHub secret)     | Yes      | `your-super-secret-token`|
 
 
