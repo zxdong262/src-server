@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "git repo src server",
   "main": "src/server.js",
-  "type":"module",
+  "type": "module",
   "scripts": {
     "lint": "./node_modules/.bin/standard",
     "fix": "./node_modules/.bin/standard --fix",
@@ -26,7 +26,8 @@
   "homepage": "https://github.com/zxdong262/src-server#readme",
   "dependencies": {
     "dotenv": "17.2.3",
-    "express": "5.1.0"
+    "express": "5.1.0",
+    "nanoid": "^5.1.6"
   },
   "devDependencies": {
     "standard": "^17.1.2",

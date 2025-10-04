@@ -5,6 +5,9 @@ import { promisify } from 'util'
 import fs from 'fs/promises'
 import path from 'path'
 import os from 'os'
+import { nanoid } from 'nanoid'
+
+// Load environment variables from .env file
 dotenv.config()
 
 const app = express()
@@ -53,7 +56,7 @@ app.get('/src', async (req, res) => {
     // Get current git hash
     const { stdout: hashOutput } = await execAsync(`git -C ${repoPath} rev-parse HEAD`)
     const gitHash = hashOutput.trim().substring(0, 7) // Abbrev hash
-    const tarFileName = `src-${gitHash}.tar.gz`
+    const tarFileName = `src-${gitHash}-${nanoid()}.tar.gz`
     const tarFilePath = path.join(tempFolder, tarFileName)
 
     // Check if tar file exists
