@@ -61,7 +61,9 @@ app.get('/src', async (req, res) => {
     if (exist) {
       await fs.unlink(tarFilePath)
     }
-    await execAsync(`tar -czf ${tarFilePath} ${SRC_FOLDER}`)
+    const parentFolder = path.dirname(SRC_FOLDER)
+    const baseFolder = path.basename(SRC_FOLDER)
+    await execAsync(`tar -czf ${tarFilePath} -C ${parentFolder} ${baseFolder}`)
 
     // Serve the file
     res.download(tarFilePath)
