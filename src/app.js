@@ -61,7 +61,7 @@ app.get('/src', async (req, res) => {
     if (exist) {
       await fs.unlink(tarFilePath)
     }
-    await execAsync(`cd ${repoPath}/.. && tar -czf ${tarFileName} ${SRC_FOLDER}`)
+    await execAsync(`tar -czf ${tarFilePath} ${SRC_FOLDER}`)
 
     // Serve the file
     res.download(tarFilePath)
