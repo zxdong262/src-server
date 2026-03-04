@@ -8,13 +8,13 @@
 
 # Git 仓库源码服务器
 
-一个简单的 Node.js Express 服务器，用于从 Git 仓库中提供指定文件夹的 tar.gz 归档文件。如果本地仓库与远程 origin 不同步，服务器会自动从指定分支拉取最新更改。访问通过基于令牌的身份验证标头进行保护。
+一个简单的 Node.js Express 服务器，用于提供整个 Git 仓库的 tar.gz 归档文件。如果本地仓库与远程 origin 不同步，服务器会自动从指定分支拉取最新更改。访问通过基于令牌的身份验证标头进行保护。
 
 ## 功能特性
 
 - **多仓库支持**：配置多个 Git 仓库，并使用 `repo` 查询参数从任意仓库提供服务。
 - **自动 Git 同步**：在提供服务前从远程 origin 拉取最新更改。
-- **按需归档**：仅为当前提交哈希不存在时创建 `src-{仓库名}-{git哈希}.tar.gz` 归档文件。
+- **按需归档**：仅为当前提交哈希不存在时创建 `src-{仓库名}-{git哈希}.tar.gz` 归档整个仓库。
 - **安全访问**：需要 `/src` 端点的匹配 `auth` 标头令牌。
 - **健康检查**：简单的 `/health` 端点用于监控。
 - **仓库发现**： `/repos` 端点列出可用仓库。
@@ -68,7 +68,6 @@ pm2 start server.js --name "git-repo-server"
 | `GIT_REPO_PATHS`    | 允许的 Git 仓库路径列表（逗号分隔）                           | 是   | `/home/user/repo1,/home/user/repo2`         |
 | `DEFAULT_REPO_PATH` | 默认仓库路径（必须是 GIT_REPO_PATHS 之一）                  | 是   | `/home/user/repo1`                          |
 | `BRANCH_NAME`       | 要跟踪和拉取的 Git 分支                                       | 是   | `main`                                      |
-| `SRC_FOLDER`        | 要归档的文件夹（`.` 表示整个仓库）                           | 是   | `/home/user/repo1/src` 或 `/home/user/repo1` |
 | `TOKEN`             | `/src` 认证的密钥令牌（GitHub secret）                      | 是   | `your-super-secret-token`                   |
 
 **注意**：
@@ -83,7 +82,6 @@ PORT=3000
 GIT_REPO_PATHS=/home/ubuntu/repo1,/home/ubuntu/repo2
 DEFAULT_REPO_PATH=/home/ubuntu/repo1
 BRANCH_NAME=main
-SRC_FOLDER=src
 TOKEN=mysecret
 ```
 
@@ -103,12 +101,12 @@ TOKEN=mysecret
   ```json
   {
     "repos": ["/path/to/repo1", "/path/to/repo2"],
-    "default": "/path/to repo1"
+    "default": "/path/to/repo1"
   }
   ```
 
 - **GET `/src`**  
-  提供 `src-{仓库名}-{git哈希}.tar.gz` 文件。  
+  提供整个仓库的 `src-{仓库名}-{git哈希}.tar.gz` 文件。  
   - **认证**：需要与 `TOKEN` 匹配的 `auth` 标头。  
   - **查询参数**：
     - `repo`（可选）：指定要使用的仓库。必须是 `GIT_REPO_PATHS` 之一。如果未提供，则使用 `DEFAULT_REPO_PATH`。  
@@ -117,11 +115,11 @@ TOKEN=mysecret
     2. 从 origin 拉取最新。  
     3. 检查本地分支是否最新；如果不是则拉取。  
     4. 获取当前提交哈希（缩短为 7 个字符）。  
-    5. 如果该哈希不存在则创建 `SRC_FOLDER` 的 tar.gz。  
+    5. 如果该哈希不存在则创建整个仓库的 tar.gz。  
     6. 下载文件。  
-  - **响应**：成功返回 200 并下载文件；无效；认证失败返回 401；其他错误返回 500。
+  - **响应**：成功返回 200 并下载文件；无效仓库返回 400；认证失败返回 401；其他错误返回 500。
 
-### 示例请求（使用 curl仓库返回 400）
+### 示例请求（使用 curl）
 
 ```bash
 # 使用默认仓库
@@ -141,7 +139,7 @@ curl -H "auth: mysecret" "http://localhost:3000/src?repo=/home/ubuntu/repo2" -o 
 ## 故障排除
 
 - **Git 错误**：确保已安装 Git（`sudo apt install git`）且仓库路径有效。检查服务器日志中的 `exec` 错误。  
-- **tar 创建失败**：验证 `SRC_FOLDER` 存在于仓库中且权限允许归档。  
+- **tar 创建失败**：验证仓库存在且权限允许归档。  
 - **端口被占用**：在 `.env` 中更改 `PORT`。  
 - **缺少环境变量**：如果未设置必填变量，服务器会在启动时退出——检查控制台输出。  
 - **无效仓库**：确保 `repo` 查询参数是 `GIT_REPO_PATHS` 中的路径之一。

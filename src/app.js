@@ -23,7 +23,7 @@ const GIT_REPO_PATHS = gitRepoPathsStr
 const DEFAULT_REPO_PATH = process.env.DEFAULT_REPO_PATH?.trim() || ''
 
 // Validate configuration
-const requiredEnvVars = ['GIT_REPO_PATHS', 'DEFAULT_REPO_PATH', 'BRANCH_NAME', 'SRC_FOLDER', 'TOKEN']
+const requiredEnvVars = ['GIT_REPO_PATHS', 'DEFAULT_REPO_PATH', 'BRANCH_NAME', 'TOKEN']
 const missingEnvVars = requiredEnvVars.filter((key) => !process.env[key])
 
 if (missingEnvVars.length > 0) {
@@ -41,7 +41,7 @@ function checkFileExists (filePath) {
   return fs.access(filePath).then(() => true).catch(() => false)
 }
 
-const { BRANCH_NAME, SRC_FOLDER, TOKEN } = process.env
+const { BRANCH_NAME, TOKEN } = process.env
 
 const execAsync = promisify(exec)
 
@@ -107,9 +107,8 @@ app.get('/src', async (req, res) => {
     if (exist) {
       await fs.unlink(tarFilePath)
     }
-    const parentFolder = path.dirname(SRC_FOLDER)
-    const baseFolder = path.basename(SRC_FOLDER)
-    await execAsync(`tar -czf ${tarFilePath} -C ${parentFolder} ${baseFolder}`)
+    // Archive the entire repo
+    await execAsync(`tar -czf ${tarFilePath} -C ${repoPath} .`)
 
     // Serve the file
     res.download(tarFilePath)

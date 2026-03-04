@@ -8,13 +8,13 @@
 
 # Git Repo Source Server
 
-A simple Node.js Express server that serves a tar.gz archive of a specified folder from a Git repository. The server automatically pulls the latest changes from the specified branch if the local repo is out of sync with the remote origin. Access is secured via a token-based authentication header.
+A simple Node.js Express server that serves a tar.gz archive of a Git repository. The server automatically pulls the latest changes from the specified branch if the local repo is out of sync with the remote origin. Access is secured via a token-based authentication header.
 
 ## Features
 
 - **Multi-Repo Support**: Configure multiple Git repositories and serve from any of them using the `repo` query parameter.
 - **Automatic Git Sync**: Fetches and pulls the latest changes from the remote origin branch before serving.
-- **On-Demand Archiving**: Creates a `src-{repo-name}-{git-hash}.tar.gz` archive of the specified source folder (or the entire repo) only if it doesn't exist for the current commit hash.
+- **On-Demand Archiving**: Creates a `src-{repo-name}-{git-hash}.tar.gz` archive of the entire repository only if it doesn't exist for the current commit hash.
 - **Secure Access**: Requires a matching `auth` header token for the `/src` endpoint.
 - **Health Check**: Simple `/health` endpoint for monitoring.
 - **Repo Discovery**: `/repos` endpoint to list available repositories.
@@ -68,7 +68,6 @@ Create a `.env` file with the following:
 | `GIT_REPO_PATHS`      | Comma-separated list of allowed Git repository paths            | Yes      | `/home/user/repo1,/home/user/repo2`          |
 | `DEFAULT_REPO_PATH`   | Default repository path (must be one of GIT_REPO_PATHS)         | Yes      | `/home/user/repo1`                           |
 | `BRANCH_NAME`         | Git branch to track and pull from                                | Yes      | `main`                                       |
-| `SRC_FOLDER`          | Folder to archive (`.` for entire repo)                         | Yes      | `/home/user/repo1/src` or `/home/user/repo1` |
 | `TOKEN`               | Secret token for `/src` auth (GitHub secret)                    | Yes      | `your-super-secret-token`                    |
 
 **Note**: 
@@ -83,7 +82,6 @@ PORT=3000
 GIT_REPO_PATHS=/home/ubuntu/repo1,/home/ubuntu/repo2
 DEFAULT_REPO_PATH=/home/ubuntu/repo1
 BRANCH_NAME=main
-SRC_FOLDER=src
 TOKEN=mysecret
 ```
 
@@ -108,7 +106,7 @@ Start the server with `node server.js`. The server will listen on the specified 
   ```
 
 - **GET `/src`**  
-  Serves the `src-{repo-name}-{git-hash}.tar.gz` file.  
+  Serves the entire repository as `src-{repo-name}-{git-hash}.tar.gz`.  
   - **Auth**: Requires `auth` header matching `TOKEN`.  
   - **Query Parameters**:
     - `repo` (optional): Specify which repo to use. Must be one of `GIT_REPO_PATHS`. If not provided, uses `DEFAULT_REPO_PATH`.
@@ -117,7 +115,7 @@ Start the server with `node server.js`. The server will listen on the specified 
     2. Fetches latest from origin.  
     3. Checks if local branch is up-to-date; pulls if not.  
     4. Gets current commit hash (abbreviated to 7 chars).  
-    5. Creates tar.gz of `SRC_FOLDER` if it doesn't exist for that hash.  
+    5. Creates tar.gz of the entire repository if it doesn't exist for that hash.  
     6. Downloads the file.  
   - **Response**: 200 with file download on success; 400 for invalid repo; 401 Unauthorized or 500 Internal Server Error on failure.
 
@@ -141,7 +139,7 @@ curl -H "auth: mysecret" "http://localhost:3000/src?repo=/home/ubuntu/repo2" -o 
 ## Troubleshooting
 
 - **Git Errors**: Ensure Git is installed (`sudo apt install git`) and the repo path is valid. Check server logs for `exec` errors.  
-- **Tar Creation Fails**: Verify `SRC_FOLDER` exists in the repo and permissions allow archiving.  
+- **Tar Creation Fails**: Verify the repository exists and permissions allow archiving.  
 - **Port in Use**: Change `PORT` in `.env`.  
 - **Missing Env Vars**: Server exits on startup if required vars are unset—check console output.  
 - **Invalid Repo**: Make sure the `repo` query parameter is one of the paths in `GIT_REPO_PATHS`.
