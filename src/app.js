@@ -12,11 +12,28 @@ dotenv.config()
 
 const app = express()
 const tempFolder = os.tmpdir()
-const requiredEnvVars = ['GIT_REPO_PATH', 'BRANCH_NAME', 'SRC_FOLDER', 'TOKEN']
+
+// Parse GIT_REPO_PATHS - comma-separated list of allowed repo paths
+const gitRepoPathsStr = process.env.GIT_REPO_PATHS || ''
+const GIT_REPO_PATHS = gitRepoPathsStr
+  .split(',')
+  .map(p => p.trim())
+  .filter(p => p.length > 0)
+
+const DEFAULT_REPO_PATH = process.env.DEFAULT_REPO_PATH?.trim() || ''
+
+// Validate configuration
+const requiredEnvVars = ['GIT_REPO_PATHS', 'DEFAULT_REPO_PATH', 'BRANCH_NAME', 'SRC_FOLDER', 'TOKEN']
 const missingEnvVars = requiredEnvVars.filter((key) => !process.env[key])
 
 if (missingEnvVars.length > 0) {
   console.error(`Missing required environment variables: ${missingEnvVars.join(', ')}`)
+  process.exit(1)
+}
+
+// Validate DEFAULT_REPO_PATH is in GIT_REPO_PATHS
+if (!GIT_REPO_PATHS.includes(DEFAULT_REPO_PATH)) {
+  console.error(`DEFAULT_REPO_PATH (${DEFAULT_REPO_PATH}) must be one of GIT_REPO_PATHS (${GIT_REPO_PATHS.join(', ')})`)
   process.exit(1)
 }
 
@@ -32,6 +49,14 @@ app.get('/health', (req, res) => {
   res.status(200).send('OK')
 })
 
+// Get list of available repos
+app.get('/repos', (req, res) => {
+  res.status(200).json({
+    repos: GIT_REPO_PATHS,
+    default: DEFAULT_REPO_PATH
+  })
+})
+
 app.get('/src', async (req, res) => {
   const authHeader = req.headers.auth
   if (!authHeader || authHeader !== TOKEN) {
@@ -39,7 +64,22 @@ app.get('/src', async (req, res) => {
   }
 
   try {
-    const repoPath = process.env.GIT_REPO_PATH
+    // Get repo from query param or use default
+    const requestedRepo = req.query.repo?.trim()
+
+    // Validate repo parameter
+    let repoPath
+    if (requestedRepo) {
+      if (!GIT_REPO_PATHS.includes(requestedRepo)) {
+        return res.status(400).json({
+          error: 'Invalid repo',
+          message: `Repo must be one of: ${GIT_REPO_PATHS.join(', ')}`
+        })
+      }
+      repoPath = requestedRepo
+    } else {
+      repoPath = DEFAULT_REPO_PATH
+    }
 
     // Fetch latest from origin
     await execAsync(`git -C ${repoPath} fetch origin`)
@@ -56,7 +96,10 @@ app.get('/src', async (req, res) => {
     // Get current git hash
     const { stdout: hashOutput } = await execAsync(`git -C ${repoPath} rev-parse HEAD`)
     const gitHash = hashOutput.trim().substring(0, 7) // Abbrev hash
-    const tarFileName = `src-${gitHash}-${nanoid()}.tar.gz`
+
+    // Include repo identifier in filename to avoid conflicts
+    const repoName = path.basename(repoPath)
+    const tarFileName = `src-${repoName}-${gitHash}-${nanoid()}.tar.gz`
     const tarFilePath = path.join(tempFolder, tarFileName)
 
     // Check if tar file exists
